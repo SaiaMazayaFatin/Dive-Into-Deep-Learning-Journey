@@ -47,7 +47,8 @@ $$\hat{y} = w_1x_1 + w_2x_2 + \dots + w_dx_d + b$$
 
 ---
 
-### The Linear 
+### The Linear Model
+
 A model describes how to transform input features into a predicted target. In linear regression, we assume the target is simply a weighted sum of the inputs.
 
 **1. The Basic Equation**
@@ -217,3 +218,159 @@ In your studies, you will often see two different words used for this phase:
 2. **Inference**: The term often used by Deep Learning practitioners.
 
 **Important distinction for your notes**: > In classical **Statistics**, "Inference" usually refers to understanding the relationship between variables (e.g., "How much does age actually affect price?"). In **Deep Learning**, "Inference" is simply the act of running data through the model to get a result. To avoid confusion with statisticians, it is often clearer to use the word Prediction.
+
+---
+
+## Vectorization for Speed
+When training models, we need to process thousands of data points at once. To do this efficiently, we use **vectorization**.
+
+Instead of using slow Python for-loops to process one number at a time, we use **linear algebra libraries** (like PyTorch or NumPy) to perform operations on entire arrays (vectors) at once. These libraries are optimized to run calculations in parallel, making them much faster.
+
+### Code Example: For-Loop vs. Vectorization
+Let's compare two ways of adding two 10,000-dimensional vectors.
+
+**1. The Setup**
+First, we create two vectors ($a$ and $b$) filled with 1s.
+
+```python
+import torch
+import time
+
+n = 10000
+a = torch.ones(n)
+b = torch.ones(n)
+```
+
+**2. The Slow Way (For-Loop)** This method adds the numbers one-by-one.
+
+```python
+c = torch.zeros(n)
+t = time.time()
+for i in range(n):
+    c[i] = a[i] + b[i]
+print(f'For-loop: {time.time() - t:.5f} sec')
+```
+
+**3. The Fast Way (Vectorized)** This method adds the entire vectors in a single operation.
+
+```python
+t = time.time()
+d = a + b
+print(f'Vectorized: {time.time() - t:.5f} sec')
+```
+
+**Why Vectorize?**
+- **Speed**: Vectorized operations are often 10x to 100x faster because they use highly optimized C or CUDA code under the hood
+- **Readability**: The code is shorter and looks more like the mathematical formulas.
+- **Less Error**: You don't have to manage loop indices ($i$), which reduces the chance of bugs.
+
+---
+
+## The Connection: Normal Distribution & Squared Loss
+
+Why do we use **Squared Error** as our loss function? It isn't just an arbitrary choice. There is a deep mathematical link between **Linear Regression** and the **Normal Distribution** (also called the Gaussian distribution).
+
+**1. The Normal Distribution Formula**
+
+The probability density of a normal distribution is defined by its **mean** ($\mu$) and **variance** ($\sigma^2$):
+
+$$p(x) = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp\left(-\frac{1}{2 \sigma^2} (x - \mu)^2\right)$$
+
+**Math Breakdown:**
+- $x$: The data point we are evaluating.
+- $\mu$ (mu): The average (center of the bell curve).
+- $\sigma^2$ (sigma squared): The variance (how spread out the curve is).
+- $\frac{1}{\sqrt{2 \pi \sigma^2}}$: A constant that ensures the total probability equals 1.
+- $\exp(\dots)$: The natural exponential function ($e$ raised to a power).
+- $(x - \mu)^2$: The squared distance from the mean. This ensures the value is always positive and penalizes outliers.
+
+**2. Visualizing with Code**
+
+Changing the **mean** shifts the curve left or right. Changing the **standard deviation** ($\sigma$) makes the curve taller/skinny or shorter/wide.
+
+```python
+import numpy as np
+import math
+
+def normal(x, mu, sigma):
+    # Calculate the constant part
+    p = 1 / math.sqrt(2 * math.pi * sigma**2)
+    # Calculate the exponential part
+    return p * np.exp(-0.5 * (x - mu)**2 / sigma**2)
+
+# Example usage for a range of values
+x = np.arange(-7, 7, 0.01)
+params = [(0, 1), (0, 2), (3, 1)] # (mean, std) pairs
+```
+
+![Normal Distribution Curves](img/3.png)
+
+**3. Why Squared Loss? (The Logic)**
+
+We assume that the actual labels ($y$) in our data are created by a linear model plus some random noise ($\epsilon$):
+
+$$y = \mathbf{w}^T \mathbf{x} + \epsilon$$
+
+If we assume the noise $\epsilon$ follows a normal distribution with a mean of $0$, then the probability of seeing a specific $y$ given our inputs $\mathbf{x}$ is:
+
+$$P(y \mid \mathbf{x}) = \frac{1}{\sqrt{2 \pi \sigma^2}} \exp\left(-\frac{1}{2 \sigma^2} (y - \mathbf{w}^\top \mathbf{x} - b)^2\right)$$
+
+**Maximum Likelihood Estimation (MLE)**
+
+To find the best weights ($\mathbf{w}$) and bias ($b$), we want to maximize the probability of the whole dataset. This is the **Maximum Likelihood Principle**:
+
+$$P(\mathbf y \mid \mathbf X) = \prod_{i=1}^{n} p(y^{(i)} \mid \mathbf{x}^{(i)})$$
+
+To make the math easier, we take the Negative Log of this probability (Negative Log-Likelihood):
+
+$$-\log P(\mathbf y \mid \mathbf X) = \sum_{i=1}^n \frac{1}{2} \log(2 \pi \sigma^2) + \frac{1}{2 \sigma^2} \left(y^{(i)} - \mathbf{w}^\top \mathbf{x}^{(i)} - b\right)^2$$
+
+**The Result**:
+If we assume $\sigma$ is constant, the only part of this formula that changes when we tweak $\mathbf{w}$ and $b$ is the last part:
+
+$$\sum_{i=1}^n (y^{(i)} - \mathbf{w}^\top \mathbf{x}^{(i)} - b)^2$$
+
+This is exactly the **Sum of Squared Errors!** This proves that minimizing squared error is the same as finding the most likely parameters for a model with normal noise.
+
+---
+
+## Linear Regression as a Neural Network
+In deep learning, we can view Linear Regression as the simplest possible neural network: **a single-layer fully connected network**.
+
+**1. The Network Structure**
+
+![Linear Regression as a Neural Network](img/4.1.png)
+
+Imagine a diagram where every input feature is a "node" (neuron) that connects directly to the output.
+- **Input Layer**: These are your features ($x_1, x_2, \ldots, x_d$). The number of inputs $d$ is called the dimensionality.
+- **Output Layer**: This is the single neuron ($o_1$) that produces our prediction.
+- **Connectivity**: Every input is connected to the output. These connections represent the weights.
+
+**2. The Formula (Neural Perspective)**
+
+The way a neuron computes a result is exactly like our linear regression formula:
+
+$$o_1 = w_1 x_1 + w_2 x_2 + \dots + w_d x_d + b$$
+
+**Detailed Formula Breakdown**:
+- $x_i$ **(Inputs)**: The data being fed into the neuron.
+- $w_i$ **(Weights)**: The strength of the connection. In biology, this is like a synapse determining how much a signal influences the next cell.
+- $b$ **(Bias)**: An internal offset that allows the neuron to fire even when inputs are low.
+- $o_1$ **(Output)**: The final weighted sum sent to the next part of the system.
+
+**3. The Biological Inspiration**
+
+![Biological Neuron](img/4.2.png)
+
+The concept of artificial neural networks was inspired by how biological neurons function in the brain
+
+| Artificial Component | Biological Equivalent | Function |
+|----------------------|----------------------|----------|
+| Input (xᵢ)           | Dendrites            | Receives signals from other neurons or sensors |
+| Weights (wᵢ)         | Synapses             | Determines the strength or impact of the incoming signal |
+| Summation + Bias     | Cell Nucleus         | Aggregates all incoming signals into one value |
+| Output (o₁)          | Axon                 | Sends the processed signal to muscles or other neurons |
+
+**Summary for your Study Material**
+
+While modern deep learning has moved far beyond simple biology (using math and statistics to fly like an airplane rather than flap like a bird), the Linear Regression model remains the "atom" of these systems. It represents a single neuron making a single decision based on weighted evidence.
