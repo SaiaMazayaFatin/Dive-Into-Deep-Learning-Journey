@@ -371,6 +371,67 @@ The concept of artificial neural networks was inspired by how biological neurons
 | Summation + Bias     | Cell Nucleus         | Aggregates all incoming signals into one value |
 | Output (o₁)          | Axon                 | Sends the processed signal to muscles or other neurons |
 
-**Summary for your Study Material**
+## Summary
 
-While modern deep learning has moved far beyond simple biology (using math and statistics to fly like an airplane rather than flap like a bird), the Linear Regression model remains the "atom" of these systems. It represents a single neuron making a single decision based on weighted evidence.
+### 1. What is Linear Regression?
+Linear Regression is a method used to **predict specific numerical** values (answering "how much?").
+- **Examples**: Predicting house prices, stock values, or hospital stay duration.
+- **Key Terms**:
+    - **Label** ($y$): The answer we want to predict (e.g., Price)
+    - **Features** ($\mathbf{x}$): The input data used to make the prediction (e.g., Area, Age).
+    - **Weights** ($\mathbf{w}$): How important each feature is.
+    - **Bias** ($b$): The baseline or intercept.
+
+### 2. The Model
+We assume the relationship between inputs and the target is a straight line plus some random noise.
+- **Scalar Formula**: $\hat{y} = w_1x_1 + \dots + w_dx_d + b$
+- **Vector Formula (Standard)**: $\hat{y} = \mathbf{w}^\top \mathbf{x} + b$
+- **Matrix Formula (Whole Dataset)**: $\hat{\mathbf{y}} = \mathbf{X} \mathbf{w} + b$
+
+### 3. The Loss Function (Measuring Error)
+We need to measure how "wrong" our predictions are to improve the model.
+- **Metric**: **Squared Error**. We square the difference between the prediction and the truth.
+- **Loss for one example**:
+
+$$l^{(i)}(\mathbf{w}, b) = \frac{1}{2} \left(\hat{y}^{(i)} - y^{(i)}\right)^2$$
+
+- **Goal**: Find the weights $\mathbf{w}$ and bias $b$ that minimize this error across the entire dataset.
+
+### 4. Optimization: How to find the best weights?
+There are two ways to solve for the best parameters:
+
+**A. The Analytic Solution (The "Shortcut")**
+
+A mathematical formula that calculates the perfect weights instantly
+- **Formula**: $\mathbf{w}^* = (\mathbf X^\top \mathbf X)^{-1}\mathbf X^\top \mathbf{y}$
+- **Pros**: Exact answer.
+- **Cons**: Very slow or impossible for large/complex datasets (requires inverting a massive matrix).
+
+**B. Stochastic Gradient Descent (SGD) (The "Deep Learning Way")**
+
+An iterative process where we tweak weights step-by-step.
+1. **Minibatch**: We take a small group of data (e.g., 32 examples)
+2. **Gradient**: We calculate the direction of the error.
+3. **Update**: We move the weights slightly in the opposite direction to reduce error.
+    - **Update Rule**: $\mathbf{w} \leftarrow \mathbf{w} - \eta \cdot \text{Gradient}$
+    - $\eta$ **(Learning Rate)**: Controls the step size.
+
+### 5. Implementation: Vectorization
+We never use ``for-loops`` to process data one by one. It is too slow.
+- **Vectorization**: Using Linear Algebra libraries (like NumPy or PyTorch) to process entire matrices of data in parallel.
+- **Benefit**: Massive speed improvements (often 100x faster).
+
+### 6. The "Why": Connection to Normal Distribution
+Why do we use Squared Error?
+- We assume the "noise" in our data follows a **Normal (Gaussian) Distribution**.
+- **Maximum Likelihood Estimation (MLE)**: If you try to find the most probable parameters for data with Gaussian noise, the math simplifies directly into minimizing the squared error.
+
+### 7. Neural Network Perspective
+Linear Regression is effectively the simplest possible Neural Network.
+- **Architecture**: A **Single-Layer Fully Connected Network**.
+- **Structure**:
+    - **Input Layer**: The features ($x$).
+    - **Connections**: The weights ($w$).
+    - **Output Node**: The summation + bias ($o$).
+
+This architecture mimics the biological neuron, where dendrites receive signals (inputs), synapses weight them, and the cell nucleus sums them up to fire an output.
